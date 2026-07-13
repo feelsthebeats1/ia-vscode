@@ -547,8 +547,8 @@ attribute_modifiers:
                 {"$ref": "#/$defs/bukkit_materials"}
             ]
         },
-        "bukkit_and_custom_blocks": {
-            "$id": "bukkit_and_custom_blocks",
+        "vanilla_and_custom_blocks": {
+            "$id": "vanilla_and_custom_blocks",
             "type": "string",
             "title": "Vanilla / ItemsAdder custom blocks",
             "markdownDescription": "Examples: **STONE**, **itemsadder:ruby_block**, **crying_obsidian**",
@@ -8791,25 +8791,25 @@ attribute_modifiers:
                             "type": "string",
                             "markdownDescription": "Animation of the food item when eaten. Available on `1.21.2+` clients only!",
                             "enum": ["none", "eat", "drink", "block", "bow", "spear", "crossbow", "spyglass", "toot_horn", "brush"]
-                        },
-                        "effects": {
-                            "type": "object",
-                            "markdownDescription": "Effects of the consumable item when consumed",
-                            "patternProperties": {
-                                "apply_status_effects.*": { "$ref": "#/$defs/consumable_effect_apply_status_effects" },
-                                "remove_status_effects.*": { "$ref": "#/$defs/consumable_effect_remove_status_effects" },
-                                "play_sound.*": { "$ref": "#/$defs/consumable_effect_play_sound" },
-                                "clear_all_status_effects.*": { "$ref": "#/$defs/consumable_effect_clear_all_status_effects" },
-                                "teleport_randomly.*": { "$ref": "#/$defs/consumable_effect_teleport_randomly" }
-                            },
-                            "properties": {
-                                "apply_status_effects": { "$ref": "#/$defs/consumable_effect_apply_status_effects" },
-                                "remove_status_effects": { "$ref": "#/$defs/consumable_effect_remove_status_effects" },
-                                "play_sound": { "$ref": "#/$defs/consumable_effect_play_sound" },
-                                "clear_all_status_effects": { "$ref": "#/$defs/consumable_effect_clear_all_status_effects" },
-                                "teleport_randomly": { "$ref": "#/$defs/consumable_effect_teleport_randomly" },
-                            }
                         }
+                        // "effects": {
+                        //     "type": "object",
+                        //     "markdownDescription": "Effects of the consumable item when consumed",
+                        //     "patternProperties": {
+                        //         "apply_status_effects.*": { "$ref": "#/$defs/consumable_effect_apply_status_effects" }, // What?
+                        //         "remove_status_effects.*": { "$ref": "#/$defs/consumable_effect_remove_status_effects" },
+                        //         "play_sound.*": { "$ref": "#/$defs/consumable_effect_play_sound" },
+                        //         "clear_all_status_effects.*": { "$ref": "#/$defs/consumable_effect_clear_all_status_effects" },
+                        //         "teleport_randomly.*": { "$ref": "#/$defs/consumable_effect_teleport_randomly" }
+                        //     },
+                        //     "properties": {
+                        //         "apply_status_effects": { "$ref": "#/$defs/consumable_effect_apply_status_effects" },
+                        //         "remove_status_effects": { "$ref": "#/$defs/consumable_effect_remove_status_effects" },
+                        //         "play_sound": { "$ref": "#/$defs/consumable_effect_play_sound" },
+                        //         "clear_all_status_effects": { "$ref": "#/$defs/consumable_effect_clear_all_status_effects" },
+                        //         "teleport_randomly": { "$ref": "#/$defs/consumable_effect_teleport_randomly" },
+                        //     }
+                        // }
                     }
                 },
                 "food": {
@@ -9783,7 +9783,7 @@ attribute_modifiers:
                 "enabled": {"type": "boolean"},
                 "type": {
                     "markdownDescription": "**Accepts only blocks, don't set items as type!**",
-                    "$ref": "#/$defs/bukkit_and_custom_blocks"
+                    "$ref": "#/$defs/vanilla_and_custom_blocks"
                 },
                 "nbt": {"$ref": "#/$defs/nbt"},
                 "drop_only_first": {
@@ -10933,7 +10933,7 @@ attribute_modifiers:
                         },
                         "break_particles_material": {
                             "markdownDescription": "Alternative to 'break_particles' property.\n\nSpecify which texture the break particle will have (more control compared to break_particles).\n**Accepts only vanilla blocks and custom items!**",
-                            "$ref": "#/$defs/bukkit_and_custom_blocks"
+                            "$ref": "#/$defs/vanilla_and_custom_blocks"
                         },
                         "shift_up": {
                             "type": "boolean",
@@ -12549,7 +12549,7 @@ attribute_modifiers:
             "markdownDescription": "Actions to be executed on this event.\n\nYou can set as many actions as you wish, you can event put the **same action multiple times**, you just have to make them start with the correct name, then append a `_1`, `_2`, `_3`...\nExample: `play_sound_1`, `play_sound_2`, `play_sound_3`.",
             "patternProperties": {
                 "^summon_entity(.*)$": {"$ref": "#/$defs/summon_entity"},
-                "^execute_command(.*)$": {"$ref": "#/$defs/execute_command"},
+                "^execute_command(.*)$": {"$ref": "#/$defs/entity_execute_command"},
                 "^script(.*)$": {"$ref": "#/$defs/entity_script"},
             },
             "properties": {
@@ -12895,7 +12895,7 @@ attribute_modifiers:
                         "blocks": {
                             "type": "array",
                             "markdownDescription": "List of blocks that the entity will move to.\nExample: `STONE`, `minecraft:cherry_trapdoor[open=true]`, `test:my_block`.",
-                            "items": {"$ref": "#/$defs/bukkit_and_custom_blocks"}
+                            "items": {"$ref": "#/$defs/vanilla_and_custom_blocks"}
                         },
                         "speed_modifier": {
                             "type": "number",
@@ -12943,7 +12943,7 @@ attribute_modifiers:
                         "blocks": {
                             "type": "array",
                             "markdownDescription": "List of blocks that the entity will eat.\nExample: `STONE`, `minecraft:cherry_trapdoor[open=true]`, `test:my_block`.",
-                            "items": { "$ref": "#/$defs/bukkit_and_custom_blocks" }
+                            "items": { "$ref": "#/$defs/vanilla_and_custom_blocks" }
                         }
                     }
                 }

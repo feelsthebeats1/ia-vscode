@@ -131,6 +131,36 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	registerJsppLanguageFeatures(context);
 
+	/**
+	 * Extract the ItemsAdder workspace path from a file path by finding the "contents" directory.
+	 * For example: "C:/server/plugins/ItemsAdder/contents/myitems/items/my_item.yml"
+	 * returns: "C:/server/plugins/ItemsAdder"
+	 */
+	function getIaWorkspacePath(filePath: string): string | undefined {
+		const normalizedPath = filePath.replace(/\\/g, "/");
+		const contentsIndex = normalizedPath.indexOf("/contents/");
+		if (contentsIndex === -1) {
+			return undefined;
+		}
+		return normalizedPath.substring(0, contentsIndex);
+	}
+
+	/**
+	 * Extract the namespace from a file path using the "contents" directory.
+	 * For example: "C:/server/plugins/ItemsAdder/contents/myitems/items/my_item.yml"
+	 * returns: "myitems"
+	 */
+	function getNamespaceFromPath(filePath: string): string | undefined {
+		const normalizedPath = filePath.replace(/\\/g, "/");
+		const parts = normalizedPath.split("/contents/");
+		if (parts.length < 2) {
+			return undefined;
+		}
+		const afterContents = parts[1];
+		const namespace = afterContents.split("/")[0];
+		return namespace || undefined;
+	}
+
 	const vscodeYaml = vscode.extensions.getExtension("redhat.vscode-yaml");
 	if(vscodeYaml)
 	{
@@ -430,38 +460,39 @@ export async function activate(context: vscode.ExtensionContext) {
 							completionItems.push(suggestion);
 						});
 
-						if (!isProjectFile()) {
-							return;
-						}
-
-						const workspaceFolders = vscode.workspace.workspaceFolders;
-						if (!workspaceFolders) {
-							console.warn('No workspace open.');
-							return;
-						}
-
-						const workspacePath = workspaceFolders[0].uri.fsPath; // Assume the first workspace
 						const currentFilePath = document.uri.fsPath;
-
-						// Get the namespace of the file
-						const namespace = currentFilePath.split("contents\\")[1].split("\\")[0];
-						if (!namespace) {
+						const iaWorkspacePath = getIaWorkspacePath(currentFilePath);
+						const namespace = getNamespaceFromPath(currentFilePath);
+						if (!iaWorkspacePath || !namespace) {
 							return;
 						}
 
 						// Find all textures in the current project
 						const possiblePaths = [
-							path.join(workspacePath, namespace, 'textures'),
-							path.join(workspacePath, namespace, `assets`, namespace, 'textures'),
-							path.join(workspacePath, namespace, `assets`, 'textures'),
+							path.join(iaWorkspacePath, namespace, 'textures'),
+							path.join(iaWorkspacePath, namespace, `assets`, namespace, 'textures'),
+							path.join(iaWorkspacePath, namespace, `assets`, 'textures'),
 
-							path.join(workspacePath, namespace, `resourcepack`, `assets`, namespace, 'textures'),
-							path.join(workspacePath, namespace, `resourcepack`, namespace, 'textures'),
-							path.join(workspacePath, namespace, `resourcepack`, 'textures'),
+							path.join(iaWorkspacePath, namespace, `resourcepack`, `assets`, namespace, 'textures'),
+							path.join(iaWorkspacePath, namespace, `resourcepack`, namespace, 'textures'),
+							path.join(iaWorkspacePath, namespace, `resourcepack`, 'textures'),
 
-							path.join(workspacePath, namespace, `resource_pack`, `assets`, namespace, 'textures'),
-							path.join(workspacePath, namespace, `resource_pack`, namespace, 'textures'),
-							path.join(workspacePath, namespace, `resource_pack`, 'textures'),
+							path.join(iaWorkspacePath, namespace, `resource_pack`, `assets`, namespace, 'textures'),
+							path.join(iaWorkspacePath, namespace, `resource_pack`, namespace, 'textures'),
+							path.join(iaWorkspacePath, namespace, `resource_pack`, 'textures'),
+
+							// contents/ paths
+							path.join(iaWorkspacePath, 'contents', namespace, 'textures'),
+							path.join(iaWorkspacePath, 'contents', namespace, `assets`, namespace, 'textures'),
+							path.join(iaWorkspacePath, 'contents', namespace, `assets`, 'textures'),
+
+							path.join(iaWorkspacePath, 'contents', namespace, `resourcepack`, `assets`, namespace, 'textures'),
+							path.join(iaWorkspacePath, 'contents', namespace, `resourcepack`, namespace, 'textures'),
+							path.join(iaWorkspacePath, 'contents', namespace, `resourcepack`, 'textures'),
+
+							path.join(iaWorkspacePath, 'contents', namespace, `resource_pack`, `assets`, namespace, 'textures'),
+							path.join(iaWorkspacePath, 'contents', namespace, `resource_pack`, namespace, 'textures'),
+							path.join(iaWorkspacePath, 'contents', namespace, `resource_pack`, 'textures'),
 						];
 
 						if (DEBUG) {
@@ -485,9 +516,12 @@ export async function activate(context: vscode.ExtensionContext) {
 											suggestion.insertText = "- " + suggestion.insertText;
 										}
 
-										const relativePath = path.relative(workspacePath, fullPath);
-										suggestion.documentation = new vscode.MarkdownString(`\`${relativePath}\`\n\n![Texture Preview](${vscode.Uri.file(fullPath)}|width=100)`);
+                                        if (iaWorkspacePath != null) {
+                                            const relativePath = path.relative(iaWorkspacePath, fullPath);
 
+                                            suggestion.documentation = new vscode.MarkdownString(`\`${relativePath}\`\n\n![Texture Preview](${vscode.Uri.file(fullPath)}|width=100)`);
+
+                                        }
 										completionItems.push(suggestion);
 									}
 								});
@@ -504,38 +538,39 @@ export async function activate(context: vscode.ExtensionContext) {
 
 						// Todo: suggest vanilla models. Might be useless.
 
-						if (!isProjectFile()) {
-							return;
-						}
-
-						const workspaceFolders = vscode.workspace.workspaceFolders;
-						if (!workspaceFolders) {
-							console.warn('No workspace open.');
-							return;
-						}
-
-						const workspacePath = workspaceFolders[0].uri.fsPath; // Assume the first workspace
 						const currentFilePath = document.uri.fsPath;
-
-						// Get the namespace of the file
-						const namespace = currentFilePath.split("contents\\")[1].split("\\")[0];
-						if (!namespace) {
+						const iaWorkspacePath = getIaWorkspacePath(currentFilePath);
+						const namespace = getNamespaceFromPath(currentFilePath);
+						if (!iaWorkspacePath || !namespace) {
 							return;
 						}
 
 						// Find all textures in the current project
 						const possiblePaths = [
-							path.join(workspacePath, namespace, 'models'),
-							path.join(workspacePath, namespace, `assets`, namespace, 'models'),
-							path.join(workspacePath, namespace, `assets`, 'models'),
+							path.join(iaWorkspacePath, namespace, 'models'),
+							path.join(iaWorkspacePath, namespace, `assets`, namespace, 'models'),
+							path.join(iaWorkspacePath, namespace, `assets`, 'models'),
 
-							path.join(workspacePath, namespace, `resourcepack`, `assets`, namespace, 'models'),
-							path.join(workspacePath, namespace, `resourcepack`, namespace, 'models'),
-							path.join(workspacePath, namespace, `resourcepack`, 'models'),
+							path.join(iaWorkspacePath, namespace, `resourcepack`, `assets`, namespace, 'models'),
+							path.join(iaWorkspacePath, namespace, `resourcepack`, namespace, 'models'),
+							path.join(iaWorkspacePath, namespace, `resourcepack`, 'models'),
 
-							path.join(workspacePath, namespace, `resource_pack`, `assets`, namespace, 'models'),
-							path.join(workspacePath, namespace, `resource_pack`, namespace, 'models'),
-							path.join(workspacePath, namespace, `resource_pack`, 'models'),
+							path.join(iaWorkspacePath, namespace, `resource_pack`, `assets`, namespace, 'models'),
+							path.join(iaWorkspacePath, namespace, `resource_pack`, namespace, 'models'),
+							path.join(iaWorkspacePath, namespace, `resource_pack`, 'models'),
+
+							// contents/ paths
+							path.join(iaWorkspacePath, 'contents', namespace, 'models'),
+							path.join(iaWorkspacePath, 'contents', namespace, `assets`, namespace, 'models'),
+							path.join(iaWorkspacePath, 'contents', namespace, `assets`, 'models'),
+
+							path.join(iaWorkspacePath, 'contents', namespace, `resourcepack`, `assets`, namespace, 'models'),
+							path.join(iaWorkspacePath, 'contents', namespace, `resourcepack`, namespace, 'models'),
+							path.join(iaWorkspacePath, 'contents', namespace, `resourcepack`, 'models'),
+
+							path.join(iaWorkspacePath, 'contents', namespace, `resource_pack`, `assets`, namespace, 'models'),
+							path.join(iaWorkspacePath, 'contents', namespace, `resource_pack`, namespace, 'models'),
+							path.join(iaWorkspacePath, 'contents', namespace, `resource_pack`, 'models'),
 						];
 
 						if (DEBUG) {
@@ -558,9 +593,12 @@ export async function activate(context: vscode.ExtensionContext) {
 										if (position.line > 0 && !document.lineAt(position.line).text.trim().includes("-") && document.lineAt(position.line - 1).text.trim().startsWith("-")) {
 											suggestion.insertText = "- " + suggestion.insertText;
 										}
+										
+                                        if (iaWorkspacePath != null) {
+                                            const relativePath = path.relative(iaWorkspacePath, fullPath);
 
-										const relativePath = path.relative(workspacePath, fullPath);
-										suggestion.documentation = new vscode.MarkdownString(`\`${relativePath}\``);
+                                            suggestion.documentation = new vscode.MarkdownString(`\`${relativePath}\``);
+                                        }
 
 										completionItems.push(suggestion);
 									}
@@ -799,6 +837,119 @@ export function deactivate() {
 	restoreOriginalSettings();
 }
 
+/**
+ * Global cache for custom_model_data across all workspace files
+ * Key: `${material}|${customModelData}`
+ * Value: array of { itemName, filePath, range }
+ */
+let globalCmdCache: Map<string, { itemName: string; filePath: string; range: [number, number] }[]> = new Map();
+
+/**
+ * Scan all ItemsAdder YAML files in the workspace and collect custom_model_data values.
+ * This is used to detect duplicate custom_model_data across files.
+ */
+function scanWorkspaceForCustomModelData() {
+	globalCmdCache.clear();
+	const workspaceFolders = vscode.workspace.workspaceFolders;
+	if (!workspaceFolders) {
+		return;
+	}
+
+	const workspacePath = workspaceFolders[0].uri.fsPath;
+	if (!workspacePath) {
+		return;
+	}
+
+	try {
+		// Find all YAML files recursively that contain "info:" (ItemsAdder resource files)
+		const yamlFiles: string[] = [];
+		function findYamlFiles(dir: string) {
+			try {
+				const entries = fs.readdirSync(dir, { withFileTypes: true });
+				for (const entry of entries) {
+					const fullPath = path.join(dir, entry.name);
+					if (entry.isDirectory()) {
+						if (!entry.name.startsWith('.')) {
+							findYamlFiles(fullPath);
+						}
+					} else if (entry.name.endsWith('.yml') || entry.name.endsWith('.yaml')) {
+						yamlFiles.push(fullPath);
+					}
+				}
+			} catch (e) {
+				// Skip directories we can't read
+			}
+		}
+		findYamlFiles(workspacePath);
+
+		for (const filePath of yamlFiles) {
+			try {
+				const content = fs.readFileSync(filePath, 'utf-8');
+				if (!content.includes('info:')) {
+					continue; // Skip non-ItemsAdder files
+				}
+
+				const doc = YAML.parseDocument(content);
+				const itemsNode = doc.get('items', true);
+				if (!itemsNode || !YAML.isCollection(itemsNode)) {
+					continue;
+				}
+
+				itemsNode.items.forEach((pair: any) => {
+					if (!YAML.isPair(pair) || !YAML.isMap(pair.value)) {
+						return;
+					}
+
+					const itemKey = pair.key?.toString();
+					if (!itemKey) {
+						return;
+					}
+
+					const item = pair.value;
+					const resourceNode = item.get('resource', true);
+					if (!resourceNode || !YAML.isMap(resourceNode)) {
+						return;
+					}
+
+					// Check for custom_model_data or the deprecated model_id
+					let cmdNode = resourceNode.get('custom_model_data', true);
+					if (!cmdNode) {
+						cmdNode = resourceNode.get('model_id', true);
+					}
+					if (!cmdNode) {
+						return;
+					}
+
+					const cmdValue = cmdNode.value;
+					if (cmdValue === undefined || cmdValue === null) {
+						return;
+					}
+
+					// Get material to create a unique key
+					const materialNode = resourceNode.get('material', true);
+					const material = materialNode ? materialNode.value?.toString() : 'PAPER';
+
+					const cacheKey = `${material}|${cmdValue}`;
+					const entry = {
+						itemName: itemKey,
+						filePath: filePath,
+						range: cmdNode.range as unknown as [number, number]
+					};
+
+					if (!globalCmdCache.has(cacheKey)) {
+						globalCmdCache.set(cacheKey, []);
+					}
+					globalCmdCache.get(cacheKey)!.push(entry);
+				});
+			} catch (e) {
+				// Skip files that can't be parsed
+			}
+		}
+	} catch (e) {
+		console.error('Error scanning workspace for custom_model_data:', e);
+	}
+}
+
 function isProjectFile() {
 	// Check if the current file is part of a vscode directory project or not
 	if (!vscode.workspace.name) {
@@ -863,6 +1014,11 @@ function handleForcedDiagnostics(doc: YAML.Document.Parsed<any, true>, text: str
 
 	const decorations: vscode.DecorationOptions[] = [];
 
+	// Scan workspace for custom_model_data to detect duplicates across files
+	if(isProjectFile()) {
+		scanWorkspaceForCustomModelData();
+	}
+
 	const node = doc.get('items', true);
 
 	if (node && YAML.isCollection(node)) {
@@ -872,6 +1028,7 @@ function handleForcedDiagnostics(doc: YAML.Document.Parsed<any, true>, text: str
 			}
 
 			const item = pair.value; // Prendi il valore effettivo del Pair (l'oggetto)
+			const itemKey = pair.key?.toString();
 
 			const resourceNode = item.get('resource'); // Non serve il secondo argomento
 			if (!resourceNode || !YAML.isMap(resourceNode)) {
@@ -942,6 +1099,67 @@ function handleForcedDiagnostics(doc: YAML.Document.Parsed<any, true>, text: str
 				}
 			}
 
+			// Check for duplicate custom_model_data across workspace files
+			if (isProjectFile() && resourceNode.has('material')) {
+				const materialNode = resourceNode.get('material', true);
+				const material = materialNode ? materialNode.value?.toString() : null;
+
+				// Check both custom_model_data and deprecated model_id
+				let cmdNode = resourceNode.get('custom_model_data', true);
+				if (!cmdNode) {
+					cmdNode = resourceNode.get('model_id', true);
+				}
+
+				if (cmdNode && material) {
+					const cmdValue = cmdNode.value;
+					if (cmdValue !== undefined && cmdValue !== null) {
+						const cacheKey = `${material}|${cmdValue}`;
+						const duplicates = globalCmdCache.get(cacheKey);
+						if (duplicates && duplicates.length > 1) {
+							const currentFilePath = activeEditor.document.uri.fsPath;
+							const otherItems = duplicates.filter(d => 
+								d.filePath !== currentFilePath || d.itemName !== itemKey
+							);
+							if (otherItems.length > 0) {
+								const otherLocations = otherItems.map(d => {
+									const relativePath = path.relative(
+										vscode.workspace.workspaceFolders![0].uri.fsPath, 
+										d.filePath
+									);
+									return `"${d.itemName}" in ${relativePath}`;
+								}).join(", ");
+								if (cmdNode.range != null) {
+									const startPos = activeEditor.document.positionAt(cmdNode.range[0]);
+									const endPos = activeEditor.document.positionAt(cmdNode.range[1]);
+									const diagnostic = new vscode.Diagnostic(
+										new vscode.Range(startPos, endPos),
+										`Duplicate custom_model_data ${cmdValue} with material ${material}! Also used by: ${otherLocations}`,
+										vscode.DiagnosticSeverity.Error
+									);
+									diagnosticsArr.push(diagnostic);
+								}
+							}
+						}
+					}
+				} else if (resourceNode.has('generate')) {
+					// Only warn if generate is explicitly false (using custom model_path)
+					const generateNode = resourceNode.get('generate', true);
+					if (generateNode && generateNode.value === false && hasModelPath && material) {
+						const modelPathNode = resourceNode.get('model_path', true);
+						if (modelPathNode && modelPathNode.range) {
+							const startPos = activeEditor.document.positionAt(modelPathNode.range[0]);
+							const endPos = activeEditor.document.positionAt(modelPathNode.range[1]);
+							const diagnostic = new vscode.Diagnostic(
+								new vscode.Range(startPos, endPos),
+								`Missing custom_model_data! When using generate: false with model_path, custom_model_data is required to avoid conflicts with other items using the same material.`,
+								vscode.DiagnosticSeverity.Warning
+							);
+							diagnosticsArr.push(diagnostic);
+						}
+					}
+				}
+			}
+
 			checkTextureExistence(resourceNode, fileNamespace, diagnosticsArr);
 			checkModelExistence(resourceNode, fileNamespace, diagnosticsArr);
 		});
@@ -997,6 +1215,21 @@ function handleForcedDiagnostics(doc: YAML.Document.Parsed<any, true>, text: str
 				path.join(workspacePath, textureNamespace, `resourcepack`, textureNamespace, `textures`, `${texturePathWithoutNamespace}`),
 				path.join(workspacePath, textureNamespace, `resource_pack`, `assets`, textureNamespace, `textures`, `${texturePathWithoutNamespace}`),
 				path.join(workspacePath, textureNamespace, `resource_pack`, textureNamespace, `textures`, `${texturePathWithoutNamespace}`),
+
+				// contents/ paths
+				path.join(workspacePath, `contents`, fileNamespace, `textures`, `${texturePathWithoutNamespace}`),
+				path.join(workspacePath, `contents`, fileNamespace, `assets`, textureNamespace, `textures`, `${texturePathWithoutNamespace}`),
+				path.join(workspacePath, `contents`, fileNamespace, `resourcepack`, `assets`, textureNamespace, `textures`, `${texturePathWithoutNamespace}`),
+				path.join(workspacePath, `contents`, fileNamespace, `resourcepack`, textureNamespace, `textures`, `${texturePathWithoutNamespace}`),
+				path.join(workspacePath, `contents`, fileNamespace, `resource_pack`, `assets`, textureNamespace, `textures`, `${texturePathWithoutNamespace}`),
+				path.join(workspacePath, `contents`, fileNamespace, `resource_pack`, textureNamespace, `textures`, `${texturePathWithoutNamespace}`),
+
+				path.join(workspacePath, `contents`, textureNamespace, `textures`, `${texturePathWithoutNamespace}`),
+				path.join(workspacePath, `contents`, textureNamespace, `assets`, `textures`, `${texturePathWithoutNamespace}`),
+				path.join(workspacePath, `contents`, textureNamespace, `resourcepack`, `assets`, textureNamespace, `textures`, `${texturePathWithoutNamespace}`),
+				path.join(workspacePath, `contents`, textureNamespace, `resourcepack`, textureNamespace, `textures`, `${texturePathWithoutNamespace}`),
+				path.join(workspacePath, `contents`, textureNamespace, `resource_pack`, `assets`, textureNamespace, `textures`, `${texturePathWithoutNamespace}`),
+				path.join(workspacePath, `contents`, textureNamespace, `resource_pack`, textureNamespace, `textures`, `${texturePathWithoutNamespace}`),
 			];
 
 			if(DEBUG) {
@@ -1128,7 +1361,22 @@ function handleForcedDiagnostics(doc: YAML.Document.Parsed<any, true>, text: str
 				path.join(workspacePath, namespace, `resourcepack`, `assets`, namespace, `models`, `${fileNoNamespace}`),
 				path.join(workspacePath, namespace, `resourcepack`, namespace, `models`, `${fileNoNamespace}`),
 				path.join(workspacePath, namespace, `resource_pack`, `assets`, namespace, `models`, `${fileNoNamespace}`),
-				path.join(workspacePath, namespace, `resource_pack`, namespace, `models`, `${fileNoNamespace}`)
+				path.join(workspacePath, namespace, `resource_pack`, namespace, `models`, `${fileNoNamespace}`),
+
+				// contents/ paths
+				path.join(workspacePath, `contents`, fileNamespace, `models`, `${fileNoNamespace}`),
+				path.join(workspacePath, `contents`, fileNamespace, `assets`, namespace, `models`, `${fileNoNamespace}`),
+				path.join(workspacePath, `contents`, fileNamespace, `resourcepack`, `assets`, namespace, `models`, `${fileNoNamespace}`),
+				path.join(workspacePath, `contents`, fileNamespace, `resourcepack`, namespace, `models`, `${fileNoNamespace}`),
+				path.join(workspacePath, `contents`, fileNamespace, `resource_pack`, `assets`, namespace, `models`, `${fileNoNamespace}`),
+				path.join(workspacePath, `contents`, fileNamespace, `resource_pack`, namespace, `models`, `${fileNoNamespace}`),
+
+				path.join(workspacePath, `contents`, namespace, `models`, `${fileNoNamespace}`),
+				path.join(workspacePath, `contents`, namespace, `assets`, namespace, `models`, `${fileNoNamespace}`),
+				path.join(workspacePath, `contents`, namespace, `resourcepack`, `assets`, namespace, `models`, `${fileNoNamespace}`),
+				path.join(workspacePath, `contents`, namespace, `resourcepack`, namespace, `models`, `${fileNoNamespace}`),
+				path.join(workspacePath, `contents`, namespace, `resource_pack`, `assets`, namespace, `models`, `${fileNoNamespace}`),
+				path.join(workspacePath, `contents`, namespace, `resource_pack`, namespace, `models`, `${fileNoNamespace}`)
 			];
 
 			console.log("Possible paths:", possiblePaths);
